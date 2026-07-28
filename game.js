@@ -200,4 +200,4 @@ for (const d of BORDER_PATHS) {
 }
 
 renderTabs();
-selectStage("isen");
+selectStage("all");
