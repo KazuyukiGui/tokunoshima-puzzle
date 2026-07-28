@@ -192,8 +192,8 @@ main {
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-  /* 横スワイプ=トレイのスクロール、縦(上)方向の動き=ドラッグ開始 */
-  touch-action: pan-x;
+  /* ブラウザのジェスチャ判定と競合しないよう全て自前処理(横=JSでトレイをスクロール/縦=ドラッグ) */
+  touch-action: none;
   white-space: nowrap;
   text-align: center;
 }

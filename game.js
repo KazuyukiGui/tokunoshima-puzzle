@@ -123,7 +123,9 @@ el.tray.addEventListener("pointerdown", (e) => {
   const card = e.target.closest(".card");
   if (!card) return;
   e.preventDefault();
-  drag = { card, id: card.dataset.id, startX: e.clientX, startY: e.clientY, moved: false };
+  drag = { card, id: card.dataset.id, startX: e.clientX, startY: e.clientY, lastX: e.clientX, mode: null };
+  // 以降のpointermove/upを確実に受け取る(指がカード外に出ても途切れない)
+  try { card.setPointerCapture(e.pointerId); } catch (_) { /* 古いブラウザは無視 */ }
 });
 
 // タッチ時は判定点(照準リング)を指より上に出す。カードの下にぶら下がるリングの中心が判定点
@@ -136,15 +138,23 @@ function aimPoint(e) {
 
 document.addEventListener("pointermove", (e) => {
   if (!drag) return;
-  if (!drag.moved) {
+  if (!drag.mode) {
     const dx = e.clientX - drag.startX;
     const dy = e.clientY - drag.startY;
     if (Math.hypot(dx, dy) < 6) return;
-    // 横方向が優勢ならトレイのスクロールに委ねる(touch-action: pan-x → pointercancelが来る)
-    if (Math.abs(dx) > Math.abs(dy)) return;
-    drag.moved = true;
-    setSelected(null);
-    drag.card.classList.add("dragging");
+    // 最初の6pxの向きで一度だけ確定: 横優勢=トレイスクロール / 縦優勢=ドラッグ
+    if (Math.abs(dx) > Math.abs(dy)) {
+      drag.mode = "scroll";
+    } else {
+      drag.mode = "drag";
+      setSelected(null);
+      drag.card.classList.add("dragging");
+    }
+  }
+  if (drag.mode === "scroll") {
+    el.tray.scrollLeft -= e.clientX - drag.lastX;
+    drag.lastX = e.clientX;
+    return;
   }
   moveCard(e);
   const aim = aimPoint(e);
@@ -155,13 +165,14 @@ document.addEventListener("pointermove", (e) => {
 
 document.addEventListener("pointerup", (e) => {
   if (!drag) return;
-  const { card, id, moved } = drag;
+  const { card, id, mode } = drag;
   drag = null;
-  if (!moved) {
+  if (mode === null) {
     // 動いていない=タップ → 選択のトグル
     setSelected(selected === card ? null : card);
     return;
   }
+  if (mode === "scroll") return;
   card.classList.remove("dragging");
   card.style.left = "";
   card.style.top = "";
@@ -195,9 +206,11 @@ el.map.addEventListener("click", (e) => {
 
 document.addEventListener("pointercancel", () => {
   if (!drag) return;
-  drag.card.classList.remove("dragging");
-  drag.card.style.left = "";
-  drag.card.style.top = "";
+  if (drag.mode === "drag") {
+    drag.card.classList.remove("dragging");
+    drag.card.style.left = "";
+    drag.card.style.top = "";
+  }
   drag = null;
   clearNear();
 });
