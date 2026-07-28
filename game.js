@@ -15,10 +15,15 @@ const el = {
   slots: document.getElementById("slots"),
   tray: document.getElementById("tray"),
   trayWrap: document.getElementById("tray-wrap"),
-  remaining: document.getElementById("remaining"),
+  remainingNum: document.getElementById("remaining-num"),
+  progressText: document.getElementById("progress-text"),
+  progressFill: document.getElementById("progress-fill"),
+  townChips: document.getElementById("town-chips"),
+  toast: document.getElementById("toast"),
   overlay: document.getElementById("clear-overlay"),
   clearStage: document.getElementById("clear-stage"),
   retry: document.getElementById("retry"),
+  nextStage: document.getElementById("next-stage"),
   map: document.getElementById("map"),
 };
 
@@ -47,11 +52,12 @@ function selectStage(key) {
   state.villages = key === "all" ? VILLAGES : VILLAGES.filter((v) => v.town === key);
   state.placedCount = 0;
   setSelected(null);
+  hideToast();
   el.overlay.hidden = true;
   renderTabs();
   renderSlots();
   renderTray();
-  updateRemaining();
+  updateProgress();
 }
 
 function renderSlots() {
@@ -60,7 +66,7 @@ function renderSlots() {
     const c = document.createElementNS(svgNS, "circle");
     c.setAttribute("cx", v.x);
     c.setAttribute("cy", v.y);
-    c.setAttribute("r", 2.1);
+    c.setAttribute("r", 2.2);
     c.classList.add("slot");
     c.dataset.id = v.id;
     el.slots.appendChild(c);
@@ -73,11 +79,13 @@ function renderTray() {
     const card = document.createElement("div");
     card.className = "card";
     card.dataset.id = v.id;
-    card.textContent = v.name;
-    const kana = document.createElement("span");
+    const name = document.createElement("div");
+    name.className = "name";
+    name.textContent = v.name;
+    const kana = document.createElement("div");
     kana.className = "kana";
     kana.textContent = v.kana;
-    card.appendChild(kana);
+    card.append(name, kana);
     el.tray.appendChild(card);
   }
   updateTrayOverflow(true);
@@ -98,9 +106,36 @@ function updateTrayOverflow(nudge) {
   });
 }
 
-function updateRemaining() {
+function updateProgress() {
   const total = state.villages.length;
-  el.remaining.textContent = `のこり ${total - state.placedCount} / ${total}`;
+  const done = state.placedCount;
+  el.remainingNum.textContent = total - done;
+  el.progressText.textContent = `${done} / ${total} 置けた`;
+  el.progressFill.style.width = total ? (done / total) * 100 + "%" : "0%";
+
+  // 全島ステージのみ町別の進捗を出す
+  if (state.stage !== "all") {
+    el.townChips.hidden = true;
+    return;
+  }
+  el.townChips.hidden = false;
+  el.townChips.replaceChildren();
+  for (const key of ["isen", "amagi", "tokunoshima"]) {
+    const tv = VILLAGES.filter((v) => v.town === key);
+    const solved = tv.filter((v) => isSolved(v.id)).length;
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    chip.textContent = TOWNS[key].replace("町", "");
+    const n = document.createElement("span");
+    n.textContent = `${solved}/${tv.length}`;
+    chip.appendChild(n);
+    el.townChips.appendChild(chip);
+  }
+}
+
+function isSolved(id) {
+  const s = el.slots.querySelector(`.slot[data-id="${id}"]`);
+  return !!s && s.classList.contains("solved");
 }
 
 // ---- 配置操作: ドラッグ&ドロップ + タップ選択→スロットタップ ----
@@ -116,7 +151,7 @@ function setSelected(card) {
 
 function rejectCard(card) {
   card.classList.add("shake");
-  setTimeout(() => card.classList.remove("shake"), 350);
+  setTimeout(() => card.classList.remove("shake"), 420);
 }
 
 el.tray.addEventListener("pointerdown", (e) => {
@@ -216,7 +251,7 @@ document.addEventListener("pointercancel", () => {
 });
 
 function moveCard(e) {
-  // カードは照準点の12px上に浮かせる(::afterのリング中心=照準点)
+  // カードは照準点の14px上に浮かせる(::afterのリング中心=照準点)
   const aim = aimPoint(e);
   drag.card.style.left = aim.x + "px";
   drag.card.style.top = aim.y + "px";
@@ -243,27 +278,68 @@ function findSlotAt(clientX, clientY) {
   return best;
 }
 
+// 波紋2重 + スタンプが押される演出(アニメ終了後に自分を消す)
+function playStamp(v) {
+  const g = document.createElementNS(svgNS, "g");
+  const mk = (cls, r) => {
+    const c = document.createElementNS(svgNS, "circle");
+    c.setAttribute("cx", v.x);
+    c.setAttribute("cy", v.y);
+    c.setAttribute("r", r);
+    c.setAttribute("class", cls);
+    return c;
+  };
+  const stamp = mk("stamp", 1.7);
+  stamp.style.transformOrigin = `${v.x}px ${v.y}px`;
+  g.append(mk("ripple ripple-1", 2.2), mk("ripple ripple-2", 2.2), stamp);
+  el.slots.appendChild(g);
+  setTimeout(() => g.remove(), 1000);
+}
+
+let toastTimer = null;
+
+function showToast(v) {
+  el.toast.querySelector(".toast-name").textContent = v.name;
+  el.toast.querySelector(".toast-kana").textContent = v.kana;
+  el.toast.querySelector(".toast-town").textContent = TOWNS[v.town];
+  el.toast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, 2200);
+}
+
+function hideToast() {
+  el.toast.hidden = true;
+}
+
 function placeCard(card, slot) {
+  slot.classList.remove("near");
   slot.classList.add("solved");
   const v = state.villages.find((x) => x.id === slot.dataset.id);
   const label = document.createElementNS(svgNS, "text");
   label.setAttribute("x", v.x);
-  label.setAttribute("y", v.y - 3);
+  label.setAttribute("y", v.y - 3.2);
   label.setAttribute("text-anchor", "middle");
   label.classList.add("slot-label");
   label.textContent = v.name;
   el.slots.appendChild(label);
+  playStamp(v);
+  showToast(v);
   card.remove();
   updateTrayOverflow(false);
   state.placedCount++;
-  updateRemaining();
+  updateProgress();
   if (state.placedCount === state.villages.length) {
-    el.clearStage.textContent = `${TOWNS[state.stage]}ステージ 全${state.villages.length}集落`;
-    el.overlay.hidden = false;
+    el.clearStage.textContent = `${TOWNS[state.stage]} ぜんぶ${state.villages.length}集落、正解！`;
+    setTimeout(() => { el.overlay.hidden = false; }, 700);
   }
 }
 
 el.retry.addEventListener("click", () => selectStage(state.stage));
+
+el.nextStage.addEventListener("click", () => {
+  const i = STAGE_ORDER.indexOf(state.stage);
+  selectStage(STAGE_ORDER[(i + 1) % STAGE_ORDER.length]);
+});
 
 // ---- devモード: ?dev=1 で地図クリック座標をviewBox座標で出力 ----
 if (new URLSearchParams(location.search).get("dev") === "1") {
@@ -276,6 +352,18 @@ if (new URLSearchParams(location.search).get("dev") === "1") {
 
 // 地図パス(map-paths.js)を流し込む
 document.getElementById("island").setAttribute("d", ISLAND_PATH);
+document.getElementById("island-clip").setAttribute("d", ISLAND_PATH);
+
+// 浅瀬エコー・等高線バンドは同じ島パスを重ね描き(太さはCSS側で指定)
+for (const id of ["shore", "contours"]) {
+  const g = document.getElementById(id);
+  for (let i = 0; i < 3; i++) {
+    const p = document.createElementNS(svgNS, "path");
+    p.setAttribute("d", ISLAND_PATH);
+    g.appendChild(p);
+  }
+}
+
 const bordersGroup = document.getElementById("borders");
 for (const d of BORDER_PATHS) {
   const p = document.createElementNS(svgNS, "path");

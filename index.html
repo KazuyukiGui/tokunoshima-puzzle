@@ -4,50 +4,82 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>徳之島集落パズル</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <h1>徳之島集落パズル</h1>
-  <p class="tagline">集落名カードを地図の正しい場所へ — ドラッグ、またはカードをタップ→地図をタップ</p>
-  <nav id="stage-tabs" aria-label="ステージ選択"></nav>
-</header>
+<div id="app">
+  <header>
+    <h1>徳之島<span class="accent">集落</span>パズル</h1>
+    <p class="tagline">カードを地図の○へドラッグ、またはタップして地図をタップ</p>
+    <nav id="stage-tabs" aria-label="ステージ選択"></nav>
+  </header>
 
-<main>
-  <div id="map-wrap">
-    <svg id="map" viewBox="0 0 100 157.5" role="img" aria-label="徳之島の地図">
-      <defs>
-        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#8ed3e8"/>
-          <stop offset="1" stop-color="#4aa8cc"/>
-        </linearGradient>
-      </defs>
-      <rect x="-10" y="-10" width="120" height="180" fill="url(#sea)"/>
-      <path id="island" d=""/>
-      <g id="borders" aria-hidden="true"></g>
-      <g id="town-labels" aria-hidden="true">
-        <text x="34" y="17" class="town-label">徳之島町</text>
-        <text x="19" y="26" class="town-label">天城町</text>
-        <text x="30" y="140" class="town-label">伊仙町</text>
-      </g>
-      <g id="slots"></g>
-    </svg>
-  </div>
+  <main>
+    <div id="status">
+      <div class="status-row">
+        <span class="remaining">のこり <b id="remaining-num"></b> 集落</span>
+        <span class="progress-text" id="progress-text"></span>
+      </div>
+      <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+      <div id="town-chips" hidden></div>
+    </div>
 
-  <div id="status">
-    <span id="remaining"></span>
-  </div>
+    <div id="map-wrap">
+      <svg id="map" viewBox="8 0 84 157.5" role="img" aria-label="徳之島の地図">
+        <defs>
+          <linearGradient id="land" x1="0.2" y1="0" x2="0.8" y2="1">
+            <stop offset="0" stop-color="#b6d886"/>
+            <stop offset="1" stop-color="#9fca6d"/>
+          </linearGradient>
+          <clipPath id="islclip"><path id="island-clip" d=""/></clipPath>
+          <filter id="lift" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="0.8" stdDeviation="0.9" flood-color="#0b5f70" flood-opacity="0.35"/>
+          </filter>
+        </defs>
+        <g id="shore" class="shore" aria-hidden="true"></g>
+        <path id="island" d="" filter="url(#lift)"/>
+        <g id="contours" class="contours" clip-path="url(#islclip)" aria-hidden="true"></g>
+        <g id="borders" aria-hidden="true"></g>
+        <g id="town-labels" aria-hidden="true">
+          <text x="34" y="17" class="town-label">徳之島町</text>
+          <text x="19" y="26" class="town-label">天城町</text>
+          <text x="30" y="140" class="town-label">伊仙町</text>
+        </g>
+        <g id="slots"></g>
+      </svg>
+      <div id="toast" hidden>
+        <span class="dot"></span>
+        <span class="toast-name"></span>
+        <span class="toast-kana"></span>
+        <span class="toast-town"></span>
+      </div>
+    </div>
+  </main>
 
-  <div id="tray-wrap">
-    <div id="tray"></div>
+  <div id="tray-panel">
+    <div class="tray-head">
+      <span class="tray-title">集落カード</span>
+      <span class="tray-rule"></span>
+      <span class="tray-hint">よこにスクロール</span>
+    </div>
+    <div id="tray-wrap">
+      <div id="tray"></div>
+    </div>
   </div>
-</main>
+</div>
 
 <div id="clear-overlay" hidden>
   <div class="clear-box">
-    <p class="clear-title">クリア</p>
+    <div class="clear-art">
+      <span class="bunny">🐇</span>
+    </div>
+    <p class="clear-title">クリア！</p>
     <p id="clear-stage"></p>
     <button id="retry">もう一回</button>
+    <button id="next-stage">つぎのステージへ</button>
   </div>
 </div>
 
