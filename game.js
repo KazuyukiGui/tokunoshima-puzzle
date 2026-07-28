@@ -45,6 +45,7 @@ function selectStage(key) {
   state.stage = key;
   state.villages = key === "all" ? VILLAGES : VILLAGES.filter((v) => v.town === key);
   state.placedCount = 0;
+  setSelected(null);
   el.overlay.hidden = true;
   renderTabs();
   renderSlots();
@@ -85,21 +86,37 @@ function updateRemaining() {
   el.remaining.textContent = `のこり ${total - state.placedCount} / ${total}`;
 }
 
-// ---- ドラッグ&ドロップ（Pointer Events・タッチ/マウス両対応） ----
+// ---- 配置操作: ドラッグ&ドロップ + タップ選択→スロットタップ ----
 
-let drag = null; // { card, id }
+let drag = null; // { card, id, startX, startY, moved }
+let selected = null; // タップ選択中のカード
+
+function setSelected(card) {
+  if (selected) selected.classList.remove("selected");
+  selected = card;
+  if (selected) selected.classList.add("selected");
+}
+
+function rejectCard(card) {
+  card.classList.add("shake");
+  setTimeout(() => card.classList.remove("shake"), 350);
+}
 
 el.tray.addEventListener("pointerdown", (e) => {
   const card = e.target.closest(".card");
   if (!card) return;
   e.preventDefault();
-  drag = { card, id: card.dataset.id };
-  card.classList.add("dragging");
-  moveCard(e);
+  drag = { card, id: card.dataset.id, startX: e.clientX, startY: e.clientY, moved: false };
 });
 
 document.addEventListener("pointermove", (e) => {
   if (!drag) return;
+  if (!drag.moved) {
+    if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < 6) return;
+    drag.moved = true;
+    setSelected(null);
+    drag.card.classList.add("dragging");
+  }
   moveCard(e);
   const near = findSlotAt(e.clientX, e.clientY);
   clearNear();
@@ -108,8 +125,13 @@ document.addEventListener("pointermove", (e) => {
 
 document.addEventListener("pointerup", (e) => {
   if (!drag) return;
-  const { card, id } = drag;
+  const { card, id, moved } = drag;
   drag = null;
+  if (!moved) {
+    // 動いていない=タップ → 選択のトグル
+    setSelected(selected === card ? null : card);
+    return;
+  }
   card.classList.remove("dragging");
   card.style.left = "";
   card.style.top = "";
@@ -119,8 +141,24 @@ document.addEventListener("pointerup", (e) => {
   if (slot.dataset.id === id) {
     placeCard(card, slot);
   } else {
-    card.classList.add("shake");
-    setTimeout(() => card.classList.remove("shake"), 350);
+    rejectCard(card);
+  }
+});
+
+// 選択中に地図側をタップ → スロット照合(外れたら選択解除)
+el.map.addEventListener("click", (e) => {
+  if (!selected) return;
+  const slot = findSlotAt(e.clientX, e.clientY);
+  if (!slot) {
+    setSelected(null);
+    return;
+  }
+  const card = selected;
+  if (slot.dataset.id === card.dataset.id) {
+    setSelected(null);
+    placeCard(card, slot);
+  } else {
+    rejectCard(card);
   }
 });
 
