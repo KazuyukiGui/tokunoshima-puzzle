@@ -105,7 +105,7 @@ function updateRemaining() {
 
 // ---- 配置操作: ドラッグ&ドロップ + タップ選択→スロットタップ ----
 
-let drag = null; // { card, id, startX, startY, moved }
+let drag = null; // { card, id, startX, startY, lastX, mode: null|"scroll"|"drag" }
 let selected = null; // タップ選択中のカード
 
 function setSelected(card) {
