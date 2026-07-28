@@ -189,5 +189,15 @@ if (new URLSearchParams(location.search).get("dev") === "1") {
   });
 }
 
+// 地図パス(map-paths.js)を流し込む
+document.getElementById("island").setAttribute("d", ISLAND_PATH);
+const bordersGroup = document.getElementById("borders");
+for (const d of BORDER_PATHS) {
+  const p = document.createElementNS(svgNS, "path");
+  p.setAttribute("d", d);
+  p.classList.add("border");
+  bordersGroup.appendChild(p);
+}
+
 renderTabs();
 selectStage("isen");

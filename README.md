@@ -14,11 +14,19 @@
 ## 集落データについて
 
 - 集落の一覧は各町の公式サイト等に基づいています
-  - [徳之島町「集落」](https://www.tokunoshima-town.org/kikakuka/kurashi/uiturn/2024syuraku.html)
-  - [伊仙町「集落紹介」](https://town.isen.kagoshima.jp/mirai/syuurakujouhou.html)
-  - [Wikipedia「天城町」](https://ja.wikipedia.org/wiki/%E5%A4%A9%E5%9F%8E%E7%94%BA)
-- 亀津市街の南区・中区・北区・東区は「亀津」に、大原1・大原2は「大原」に統合しています
-- **地図上の位置はデフォルメ地図上の近似です。**測地的な正確さはありません
+  - [徳之島町「集落別人口」](https://www.tokunoshima-town.org/kikakuka/chose/toke/jinko.html)（公式30集落）
+  - [伊仙町「集落紹介」](https://town.isen.kagoshima.jp/mirai/syuurakujouhou.html)（公式31集落を20地域に統合）
+  - [Wikipedia「天城町」](https://ja.wikipedia.org/wiki/%E5%A4%A9%E5%9F%8E%E7%94%BA)（11大字）
+- 亀津市街の南区・中区・北区・東区は「亀津」に、大原1・大原2は「大原」に統合しています（徳之島町は計26カード）
+- 母間・花徳・山は大字名のためカードにはありません（それぞれ池間/反川/大当/花時名、前川/新村/上花徳、港川/内千川/山里/畦が該当集落です）
+- 集落の位置は実際の経緯度（OSM placeノード・国土地理院AddressSearch・周辺施設）から投影していますが、
+  近接集落はゲーム操作性のため最小間隔まで押し広げています。**厳密な測地位置ではありません**
+- 一部の小集落（`approx: true`）は公的座標データが無いため周辺情報からの推定です
+
+## 地図データの出典
+
+- 島の輪郭・町境・集落位置の一部: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors（ODbL）
+- 集落位置のジオコーディング: [国土地理院 住所検索API](https://msearch.gsi.go.jp/address-search/AddressSearch)
 
 ## 技術
 
