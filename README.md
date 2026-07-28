@@ -34,6 +34,11 @@
 
 開発用: URLに `?dev=1` を付けると、地図クリックでviewBox座標がコンソールに出ます（座標調整用）。
 
+## アクセス解析
+
+[GoatCounter](https://www.goatcounter.com/) を使用（`count.js` はISCライセンスで同梱・セルフホスト）。
+サイトコード: `tokunoshima-puzzle` / ダッシュボード: https://tokunoshima-puzzle.goatcounter.com/
+
 ## ライセンス
 
-MIT
+MIT（同梱の `count.js` はISC、地図データは © OpenStreetMap contributors / ODbL）
