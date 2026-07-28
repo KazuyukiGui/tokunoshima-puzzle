@@ -73,7 +73,7 @@ main {
 
 #map {
   width: 100%;
-  max-height: 58dvh;
+  max-height: 62dvh;
   height: auto;
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(43, 126, 163, 0.25);
@@ -132,15 +132,52 @@ main {
   color: #5b7280;
 }
 
-#tray {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 4px 10px;
+#tray-wrap {
+  position: relative;
   width: 100%;
-  max-height: 26dvh;
-  overflow-y: auto;
+}
+
+/* 横スクロールの続きを示す端フェード(あふれている時だけ表示) */
+#tray-wrap::before,
+#tray-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 22px;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+#tray-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, #eaf6fa, rgba(234, 246, 250, 0));
+}
+
+#tray-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, #eaf6fa, rgba(234, 246, 250, 0));
+}
+
+#tray-wrap.overflowing::before,
+#tray-wrap.overflowing::after {
+  opacity: 1;
+}
+
+#tray {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, auto);
+  justify-content: safe center;
+  gap: 6px;
+  padding: 6px 18px 10px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
 }
 
 .card {
@@ -155,7 +192,10 @@ main {
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none;
+  /* 横スワイプ=トレイのスクロール、縦(上)方向の動き=ドラッグ開始 */
+  touch-action: pan-x;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .card .kana {

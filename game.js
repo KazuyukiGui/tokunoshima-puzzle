@@ -14,6 +14,7 @@ const el = {
   tabs: document.getElementById("stage-tabs"),
   slots: document.getElementById("slots"),
   tray: document.getElementById("tray"),
+  trayWrap: document.getElementById("tray-wrap"),
   remaining: document.getElementById("remaining"),
   overlay: document.getElementById("clear-overlay"),
   clearStage: document.getElementById("clear-stage"),
@@ -79,6 +80,22 @@ function renderTray() {
     card.appendChild(kana);
     el.tray.appendChild(card);
   }
+  updateTrayOverflow(true);
+}
+
+// あふれ検知(端フェード表示)と、初回のスクロールナッジで「続きがある」ことを見せる
+function updateTrayOverflow(nudge) {
+  requestAnimationFrame(() => {
+    const overflowing = el.tray.scrollWidth > el.tray.clientWidth + 4;
+    el.trayWrap.classList.toggle("overflowing", overflowing);
+    if (nudge) {
+      el.tray.scrollLeft = 0;
+      if (overflowing) {
+        setTimeout(() => el.tray.scrollTo({ left: 70, behavior: "smooth" }), 300);
+        setTimeout(() => el.tray.scrollTo({ left: 0, behavior: "smooth" }), 900);
+      }
+    }
+  });
 }
 
 function updateRemaining() {
@@ -120,7 +137,11 @@ function aimPoint(e) {
 document.addEventListener("pointermove", (e) => {
   if (!drag) return;
   if (!drag.moved) {
-    if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < 6) return;
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
+    if (Math.hypot(dx, dy) < 6) return;
+    // 横方向が優勢ならトレイのスクロールに委ねる(touch-action: pan-x → pointercancelが来る)
+    if (Math.abs(dx) > Math.abs(dy)) return;
     drag.moved = true;
     setSelected(null);
     drag.card.classList.add("dragging");
@@ -220,6 +241,7 @@ function placeCard(card, slot) {
   label.textContent = v.name;
   el.slots.appendChild(label);
   card.remove();
+  updateTrayOverflow(false);
   state.placedCount++;
   updateRemaining();
   if (state.placedCount === state.villages.length) {
