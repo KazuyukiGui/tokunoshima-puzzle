@@ -176,8 +176,34 @@ main {
   position: fixed;
   z-index: 100;
   pointer-events: none;
-  transform: translate(-50%, -120%) scale(1.08);
+  /* left/top=照準点。カード本体はその12px上、::afterのリング中心が照準点に一致 */
+  transform: translate(-50%, calc(-100% - 12px));
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+}
+
+.card.dragging::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 12px);
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border: 2.5px solid var(--accent);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.card.dragging::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 6px;
+  background: var(--accent);
 }
 
 .card.shake {

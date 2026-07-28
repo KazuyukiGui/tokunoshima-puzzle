@@ -109,6 +109,14 @@ el.tray.addEventListener("pointerdown", (e) => {
   drag = { card, id: card.dataset.id, startX: e.clientX, startY: e.clientY, moved: false };
 });
 
+// タッチ時は判定点(照準リング)を指より上に出す。カードの下にぶら下がるリングの中心が判定点
+const TOUCH_AIM_OFFSET = 44;
+
+function aimPoint(e) {
+  const offset = e.pointerType === "mouse" ? 0 : TOUCH_AIM_OFFSET;
+  return { x: e.clientX, y: e.clientY - offset };
+}
+
 document.addEventListener("pointermove", (e) => {
   if (!drag) return;
   if (!drag.moved) {
@@ -118,7 +126,8 @@ document.addEventListener("pointermove", (e) => {
     drag.card.classList.add("dragging");
   }
   moveCard(e);
-  const near = findSlotAt(e.clientX, e.clientY);
+  const aim = aimPoint(e);
+  const near = findSlotAt(aim.x, aim.y);
   clearNear();
   if (near) near.classList.add("near");
 });
@@ -136,7 +145,8 @@ document.addEventListener("pointerup", (e) => {
   card.style.left = "";
   card.style.top = "";
   clearNear();
-  const slot = findSlotAt(e.clientX, e.clientY);
+  const aim = aimPoint(e);
+  const slot = findSlotAt(aim.x, aim.y);
   if (!slot) return;
   if (slot.dataset.id === id) {
     placeCard(card, slot);
@@ -172,8 +182,10 @@ document.addEventListener("pointercancel", () => {
 });
 
 function moveCard(e) {
-  drag.card.style.left = e.clientX + "px";
-  drag.card.style.top = e.clientY + "px";
+  // カードは照準点の12px上に浮かせる(::afterのリング中心=照準点)
+  const aim = aimPoint(e);
+  drag.card.style.left = aim.x + "px";
+  drag.card.style.top = aim.y + "px";
 }
 
 function clearNear() {
