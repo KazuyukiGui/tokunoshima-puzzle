@@ -302,9 +302,18 @@ function showToast(v) {
   el.toast.querySelector(".toast-name").textContent = v.name;
   el.toast.querySelector(".toast-kana").textContent = v.kana;
   el.toast.querySelector(".toast-town").textContent = TOWNS[v.town];
+  // 特徴がある集落のみ1行表示。無い集落はヘッダ行だけ(「情報なし」とは出さない)
+  const note = el.toast.querySelector(".toast-note");
+  if (v.note) {
+    note.textContent = v.note;
+    note.hidden = false;
+  } else {
+    note.hidden = true;
+  }
   el.toast.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(hideToast, 2200);
+  // 特徴ありは読める長さ(5秒)、なしは従来通り
+  toastTimer = setTimeout(hideToast, v.note ? 5000 : 2200);
 }
 
 function hideToast() {
