@@ -2,6 +2,7 @@
 
 作成: 2026-07-29 / 一次収集: 3町公式等 → Codex(gpt-5.6-sol, Web検索)クロスチェック → 主要差し替えを一次資料で二次検証済み。
 文字数方針: 最大2行・35字上限（village-notes-design.md参照）。note無し（null）は内千川・山里の2件。
+**2026-07-29 観光客向け改訂**: 地域内向けネタ7件を観光・地理表現に差し替え（下表は改訂後。地理表現は検証済み座標データ由来）。
 
 ## 伊仙町（20/20）
 | id | 集落 | note案 | 出典 |
@@ -11,7 +12,7 @@
 | meteku | 目手久 | 島内最大の観光闘牛場がある闘牛どころ | 同上 |
 | omonawa | 面縄 | 島最南端の海辺に縄文後期の面縄貝塚が残る | 同上 |
 | furusato | 古里 | 浜に面した数少ない集落。車の入れない細道が残る | 同上 |
-| kenbuku | 検福 | 商店やゲストハウスがあり集落活動も活発 | 同上 |
+| kenbuku | 検福 | 商店やゲストハウスがあり滞在の拠点にも便利 | 同上 |
 | gozendo | 御前堂 | 体育館やグラウンドを備えた義名山総合運動公園 | 同上 |
 | isen | 伊仙 | 町役場や主要施設が集まる伊仙町の中心地 | 同上 |
 | asan-shikaura | 阿三・鹿浦 | 長寿世界一とされた泉重千代翁の故郷。カムィヤキ窯跡も | 同上 ※「世界最長寿ギネス」と現在形で断定しない（Codex指摘） |
@@ -21,10 +22,10 @@
 | kinoko | 木之香 | かつて世界最高齢と認定された本郷かまとさんの故郷 | 同上 ※「かつて認定」表現（生年の確実性に研究上の議論） |
 | inutabu | 犬田布 | 断崖の景勝地・犬田布岬を望む、海と暮らす里 | 同上 |
 | sagibaru | 崎原 | 池の台公園から晴れた日は沖永良部島を望む | 同上 |
-| uebaru | 上晴 | 高齢者の地域サロン活動が盛んな集落 | 同上 |
+| uebaru | 上晴 | 崎原の隣、伊仙町西部ののどかな集落 | 同上 |
 | itokina | 糸木名 | 二つの県道が交わる町北部の集落 | 同上 |
 | yaezo | 八重竿 | 県道沿いにほぼ実物大の闘牛模型が立つ | 同上 |
-| kawachi | 河地 | 県道沿いの無人市場が地域の人々に人気 | 同上 |
+| kawachi | 河地 | 県道沿いの無人市場で島の野菜に出会える | 同上 |
 | kojima | 小島 | 小原海岸の温かな潮だまりはかつての湯治場 | 同上 |
 
 ## 徳之島町（24/26、null=内千川・山里）
@@ -32,15 +33,15 @@
 |---|---|---|---|
 | kametsu | 亀津 | 薩摩藩代官所跡が残り「学士村」と呼ばれた中心地 | [代官所跡](https://www.tokunoshima-town.org/shakaikyoikuka/kurashi/kyoiku/bunka/bunkazai/shiseki/kametsu/daikanshoato.html) ※出典は旧南区の紹介（統合カードへ転用） |
 | kametoku | 亀徳 | 水を掛け合う正月行事「ネンケ」が伝わる港の里 | [30集落紹介](https://www.tokunoshima-town.org/kikakuka/kurashi/uiturn/2024syuraku.html) |
-| tokuwase | 徳和瀬 | 12歳以下の子どもが約2倍に増えた子育ての里 | 同上 ※紹介掲載時点の過去10年統計 |
+| tokuwase | 徳和瀬 | 亀徳港の北隣、海沿いに家並みが続く集落 | 同上 ※紹介掲載時点の過去10年統計 |
 | shoda | 諸田 | 渡り鳥が集う野鳥観察の名所・諸田池 | [諸田池](https://www.tokunoshima-town.org/shakaikyoikuka/kurashi/kyoiku/bunka/bunkazai/shiseki/shoda/shodaike.html) |
-| kaminomine | 神之嶺 | 神之嶺小学校の敷地に保育所を併設する学びの里 | [町施設一覧](https://www.tokunoshima-town.org/shisetsu/kosodate/index.html) |
+| kaminomine | 神之嶺 | 井之川と諸田の間に位置する東海岸の集落 | [町施設一覧](https://www.tokunoshima-town.org/shisetsu/kosodate/index.html) |
 | inokawa | 井之川 | 第46代横綱・朝潮太郎の生誕地。記念像が立つ | [町観光](https://www.tokunoshima-town.org/omotenashikanko/kanko/area/asashio.html) ※二次検証済み |
 | asahigaoka | 旭ケ丘 | 昭和30年代、井之川岳の麓に入植で生まれた里 | 30集落紹介 |
 | shimokushi | 下久志 | 十五夜に茅葺き小屋「サンシキ」で相撲と踊り | 30集落紹介 |
 | ikema | 池間 | 町指定文化財「池間棒踊り」を受け継ぐ | [町文化財一覧](https://www.tokunoshima-town.org/shakaikyoikuka/kyodoshiryokan/bunnkazai.html) |
-| tankawa | 反川 | トゥール墓で祖霊祭を続ける集落 | [町広報](https://www.tokunoshima-town.org/chose/koho/photonews/20240815tankawaireisai.html) |
-| oatari | 大当 | 約170本のヒカンザクラが彩る桜並木の里 | [町広報](https://www.tokunoshima-town.org/kikakuka/chose/koho/photonews/200209bomasakuramatsuri.html) |
+| tankawa | 反川 | 奄美伝統のトゥール墓が受け継がれる集落 | [町広報](https://www.tokunoshima-town.org/chose/koho/photonews/20240815tankawaireisai.html) |
+| oatari | 大当 | 約170本のヒカンザクラが並ぶ花見の里 | [町広報](https://www.tokunoshima-town.org/kikakuka/chose/koho/photonews/200209bomasakuramatsuri.html) |
 | kedokina | 花時名 | 展望台から里久浜と集落を一望 | [町広報](https://www.tokunoshima-town.org/kikakuka/chose/koho/photonews/200119kedokinatenboudaibikaseisou.html) ※Codex案の「加計呂麻島を望む」は距離的に不確実なため里久浜に限定 |
 | maekawa | 前川 | 殿地屋敷跡が残る花徳三地区の一つ | [花徳神社](https://www.tokunoshima-town.org/shakaikyoikuka/kurashi/kyoiku/bunka/bunkazai/shiseki/kedoku/kedokujinja.html) |
 | shinmura | 新村 | 花徳三地区のうち海岸沿いに家並みが広がる | [町誌デジタル版](https://www.tokunoshima-town.org/digitalbook/choushi/pageindices/index27.html) |

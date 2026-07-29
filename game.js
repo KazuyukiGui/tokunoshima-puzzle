@@ -223,8 +223,16 @@ document.addEventListener("pointerup", (e) => {
 });
 
 // 選択中に地図側をタップ → スロット照合(外れたら選択解除)
+// 未選択時は正解済みの○タップで豆知識を再表示
 el.map.addEventListener("click", (e) => {
-  if (!selected) return;
+  if (!selected) {
+    const solvedSlot = findSlotAt(e.clientX, e.clientY, ".slot.solved");
+    if (solvedSlot) {
+      const v = state.villages.find((x) => x.id === solvedSlot.dataset.id);
+      if (v) showToast(v);
+    }
+    return;
+  }
   const slot = findSlotAt(e.clientX, e.clientY);
   if (!slot) {
     setSelected(null);
@@ -261,10 +269,10 @@ function clearNear() {
   for (const s of el.slots.querySelectorAll(".slot.near")) s.classList.remove("near");
 }
 
-function findSlotAt(clientX, clientY) {
+function findSlotAt(clientX, clientY, selector = ".slot:not(.solved)") {
   let best = null;
   let bestDist = Infinity;
-  for (const slot of el.slots.querySelectorAll(".slot:not(.solved)")) {
+  for (const slot of el.slots.querySelectorAll(selector)) {
     const r = slot.getBoundingClientRect();
     const cx = r.left + r.width / 2;
     const cy = r.top + r.height / 2;
