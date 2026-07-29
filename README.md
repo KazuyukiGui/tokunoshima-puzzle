@@ -34,6 +34,8 @@
 
 開発用: URLに `?dev=1` を付けると、地図クリックでviewBox座標がコンソールに出ます（座標調整用）。
 
+Claude Design側の `dist/` から `index.html` を取り込む際は、`<head>` のOGP・descriptionメタタグ（`og-image.jpg` 参照）を必ず保持すること（照準リング・方向ロック・タップ配置・GoatCounter・`?dev=1` と同列の保持項目）。
+
 ## アクセス解析
 
 [GoatCounter](https://www.goatcounter.com/) を使用（`count.js` はISCライセンスで同梱・セルフホスト）。
