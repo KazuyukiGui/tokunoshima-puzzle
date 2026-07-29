@@ -3,6 +3,7 @@
 作成: 2026-07-29 / 一次収集: 3町公式等 → Codex(gpt-5.6-sol, Web検索)クロスチェック → 主要差し替えを一次資料で二次検証済み。
 文字数方針: 最大2行・35字上限（village-notes-design.md参照）。note無し（null）は内千川・山里の2件。
 **2026-07-29 観光客向け改訂**: 地域内向けネタ7件を観光・地理表現に差し替え（下表は改訂後。地理表現は検証済み座標データ由来）。
+**同日追補（全55件を観光実用レンズで再点検）**: 亀津=島一番の繁華街／亀徳=フェリー玄関口に差し替え。他53件は観光客に有効と判断し維持。
 
 ## 伊仙町（20/20）
 | id | 集落 | note案 | 出典 |
@@ -31,8 +32,8 @@
 ## 徳之島町（24/26、null=内千川・山里）
 | id | 集落 | note案 | 出典 |
 |---|---|---|---|
-| kametsu | 亀津 | 薩摩藩代官所跡が残り「学士村」と呼ばれた中心地 | [代官所跡](https://www.tokunoshima-town.org/shakaikyoikuka/kurashi/kyoiku/bunka/bunkazai/shiseki/kametsu/daikanshoato.html) ※出典は旧南区の紹介（統合カードへ転用） |
-| kametoku | 亀徳 | 水を掛け合う正月行事「ネンケ」が伝わる港の里 | [30集落紹介](https://www.tokunoshima-town.org/kikakuka/kurashi/uiturn/2024syuraku.html) |
+| kametsu | 亀津 | 飲食店が集まる島一番の繁華街。学士村の歴史も | 「島一番の繁華街」は通称として複数の観光記事で使用（[JAC観光](https://www.jac.co.jp/tourism/tokunoshima/gourmet.html)等）・地元出身のKazu確認済み。学士村は[代官所跡](https://www.tokunoshima-town.org/shakaikyoikuka/kurashi/kyoiku/bunka/bunkazai/shiseki/kametsu/daikanshoato.html) |
+| kametoku | 亀徳 | 鹿児島〜沖縄航路のフェリーが発着する島の玄関口 | [マルエーフェリー鹿児島航路](https://www.aline-ferry.com/kagoshima/)（亀徳港に毎日寄港） ※旧案のネンケ（正月の水かけ行事）は30集落紹介参照 |
 | tokuwase | 徳和瀬 | 亀徳港の北隣、海沿いに家並みが続く集落 | 同上 ※紹介掲載時点の過去10年統計 |
 | shoda | 諸田 | 渡り鳥が集う野鳥観察の名所・諸田池 | [諸田池](https://www.tokunoshima-town.org/shakaikyoikuka/kurashi/kyoiku/bunka/bunkazai/shiseki/shoda/shodaike.html) |
 | kaminomine | 神之嶺 | 井之川と諸田の間に位置する東海岸の集落 | [町施設一覧](https://www.tokunoshima-town.org/shisetsu/kosodate/index.html) |
