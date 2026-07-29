@@ -40,6 +40,6 @@
 4. 層2（シェア）は利用が立ち上がってから
 
 ## 4. 現実行動チェックリスト（Kazu）
-- [ ] 郷友会・出身者コミュニティへ共有（URLと一言紹介）
-- [ ] 反応の観察（GoatCounterダッシュボード: https://tokunoshima-puzzle.goatcounter.com/ ※アカウント登録が前提）
+- [x] 郷友会・出身者コミュニティへ共有（2026-07-29 FB投稿。OGP整備済み・AI言及なし・座標デフォルメ注記＋訂正歓迎の一文入り）
+- [ ] 反応の観察（GoatCounterダッシュボード: https://tokunoshima-puzzle.goatcounter.com/ ※登録済み）
 - [ ] 観光連盟・役場への持ち込み判断（持ち込み資料が必要になったら作成を指示）
