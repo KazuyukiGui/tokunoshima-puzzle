@@ -83,6 +83,53 @@
       <div id="tray"></div>
     </div>
   </div>
+
+  <footer id="about">
+    <details>
+      <summary>このゲームについて・情報をお寄せください</summary>
+      <div class="about-body">
+        <p>
+          このゲームは、<b>徳之島出身の個人</b>が、集落名や地域への関心を持つきっかけとして制作したものです。
+          自治体・観光団体による監修を受けたものではありません。
+        </p>
+        <p>
+          集落の配置は<b>遊びやすさのためデフォルメ</b>してあり、行政上・地理上の正確な位置を示すものではありません。
+          豆知識は各町・公的機関の公開資料を参照しています。
+        </p>
+        <p class="ask">
+          地域で使われる<b>呼び名</b>、<b>近年の変化</b>、<b>残しておきたい思い出</b>などをご存じでしたら、
+          ぜひお知らせください。明らかな誤記も、確認のうえ修正します。
+        </p>
+
+        <form id="note-form">
+          <p class="form-note">
+            送信先は制作者個人です。いただいた内容は、このゲームの修正・追記の検討にのみ使います。
+            確認のご返信をするため、メールアドレスをお願いしています。画像認証はありません。
+          </p>
+          <label>
+            <span>お名前（任意）</span>
+            <input type="text" name="name" autocomplete="name">
+          </label>
+          <label>
+            <span>メールアドレス</span>
+            <input type="email" name="email" required autocomplete="email">
+          </label>
+          <label>
+            <span>お知らせいただく内容</span>
+            <textarea name="message" rows="4" required placeholder="例: ○○集落の位置は、もう少し北の感覚です／この呼び方は地元では使いません／昔はこう呼んでいました"></textarea>
+          </label>
+          <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" aria-hidden="true">
+          <button type="submit">送信する</button>
+          <p class="form-done" id="note-done" hidden>ありがとうございます。確認のうえ、ご返信します。</p>
+          <p class="form-alt">
+            GitHubをお使いの方は <a href="https://github.com/kazuyukigui/tokunoshima-puzzle/issues" target="_blank" rel="noopener">こちら（Issues）</a> からでも構いません。
+          </p>
+        </form>
+
+        <p class="meta">最終更新: 2026年8月9日</p>
+      </div>
+    </details>
+  </footer>
 </div>
 
 <div id="clear-overlay" hidden>
@@ -100,6 +147,40 @@
 <script src="map-paths.js"></script>
 <script src="data.js"></script>
 <script src="game.js"></script>
+<script>
+(function () {
+  var f = document.getElementById('note-form');
+  if (!f) return;
+  var done = document.getElementById('note-done');
+  var btn = f.querySelector('button[type="submit"]');
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = function (n) { var el = f.querySelector('[name="' + n + '"]'); return (el && el.value || '').trim(); };
+    var name = v('name'), email = v('email'), message = v('message');
+    if (!email || !message) return;
+    var label = btn.textContent;
+    btn.disabled = true; btn.textContent = '送信中...';
+    fetch('https://api.web3forms.com/submit', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        access_key: '4db7eafe-06eb-476b-b385-99a7e7cb63cd',
+        subject: '【徳之島集落パズル】情報のお知らせ' + (name ? ' - ' + name : ''),
+        name: name || '（未記入）',
+        email: email,
+        message: message,
+        botcheck: f.querySelector('[name="botcheck"]').checked ? 'on' : ''
+      })
+    }).then(function (r) { return r.json(); }).then(function (r) {
+      if (!r.success) throw new Error('failed');
+      f.querySelectorAll('label, button').forEach(function (el) { el.hidden = true; });
+      done.hidden = false;
+    }).catch(function () {
+      alert('送信できませんでした。時間をおいて試すか、GitHubのIssuesからお知らせください。');
+      btn.disabled = false; btn.textContent = label;
+    });
+  });
+})();
+</script>
 <script data-goatcounter="https://tokunoshima-puzzle.goatcounter.com/count" async src="count.js"></script>
 </body>
 </html>

@@ -465,3 +465,117 @@ main { flex: 1; display: flex; flex-direction: column; padding: 12px 14px 0; gap
   font-size: 14px;
   font-weight: 700;
 }
+
+/* ---- このゲームについて / 情報提供の窓口 ----
+   既定は閉じた状態にして、遊びの邪魔をしない。
+   役場・学校が確認したい運営情報（制作の主体・出典・デフォルメ仕様・更新日）を1か所に集約する。 */
+#about {
+  border-top: 1px solid var(--line);
+  background: var(--cream-2);
+  padding: 0 14px 22px;
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--muted);
+}
+
+#about summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 14px 2px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent-deep);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+#about summary::-webkit-details-marker { display: none; }
+
+#about summary::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+#about details[open] summary::before { transform: rotate(-135deg); }
+
+#about .about-body > p { margin-bottom: 11px; }
+#about b { color: var(--ink); font-weight: 700; }
+
+#about .ask {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 13px;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+
+#note-form { display: flex; flex-direction: column; gap: 10px; }
+
+#note-form .form-note {
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--muted-2);
+  margin-bottom: 2px;
+}
+
+#note-form label { display: flex; flex-direction: column; gap: 4px; }
+#note-form label span { font-size: 11.5px; font-weight: 700; color: var(--muted); }
+
+#note-form input, #note-form textarea {
+  font-family: inherit;
+  font-size: 15px;              /* iOSで自動ズームしない下限 */
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 12px;
+  width: 100%;
+}
+
+#note-form textarea { resize: vertical; line-height: 1.7; }
+#note-form input:focus, #note-form textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+#note-form ::placeholder { color: var(--muted-2); font-size: 12.5px; }
+
+#note-form button {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 999px;
+  padding: 13px 20px;
+  margin-top: 2px;
+  cursor: pointer;
+  min-height: 46px;             /* 指で押せる大きさ */
+}
+
+#note-form button:active { background: var(--accent-deep); }
+#note-form button:disabled { opacity: .6; }
+
+#note-form .form-done {
+  background: #eaf7ea;
+  border: 1px solid #cfe8cf;
+  border-radius: 10px;
+  padding: 12px 13px;
+  color: #3f6b3f;
+  font-weight: 700;
+}
+
+#note-form .form-alt { font-size: 11.5px; color: var(--muted-2); }
+#note-form .form-alt a { color: var(--accent-deep); }
+
+#about .meta {
+  margin-top: 16px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+  font-size: 11.5px;
+  color: var(--muted-2);
+}
