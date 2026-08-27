@@ -25,6 +25,7 @@
   <header>
     <h1>徳之島<span class="accent">集落</span>パズル</h1>
     <p class="tagline">カードを地図の○へドラッグ、またはタップして地図をタップ</p>
+    <p class="tagline kbd-hint">キーボード: <b>Tab</b> で移動 / <b>矢印</b> で選ぶ / <b>Enter</b> で決定 / <b>Esc</b> で取り消し</p>
     <nav id="stage-tabs" aria-label="ステージ選択"></nav>
   </header>
 
@@ -39,7 +40,7 @@
     </div>
 
     <div id="map-wrap">
-      <svg id="map" viewBox="8 0 84 157.5" role="img" aria-label="徳之島の地図">
+      <svg id="map" viewBox="8 0 84 157.5" role="group" aria-label="徳之島の地図">
         <defs>
           <linearGradient id="land" x1="0.2" y1="0" x2="0.8" y2="1">
             <stop offset="0" stop-color="#b6d886"/>
@@ -59,7 +60,7 @@
           <text x="19" y="26" class="town-label">天城町</text>
           <text x="30" y="140" class="town-label">伊仙町</text>
         </g>
-        <g id="slots"></g>
+        <g id="slots" role="group" aria-label="地図上の配置場所"></g>
       </svg>
       <div id="toast" hidden role="status">
         <div class="toast-head">
@@ -78,9 +79,10 @@
       <span class="tray-title">集落カード</span>
       <span class="tray-rule"></span>
       <span class="tray-hint">よこにスクロール</span>
+      <span class="tray-hint kbd-hint">Enterで選ぶ</span>
     </div>
     <div id="tray-wrap">
-      <div id="tray"></div>
+      <div id="tray" role="group" aria-label="集落カード"></div>
     </div>
   </div>
 
@@ -130,17 +132,19 @@
       </div>
     </details>
   </footer>
+
+  <p id="sr-live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
 </div>
 
-<div id="clear-overlay" hidden>
+<div id="clear-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="clear-title">
   <div class="clear-box">
     <div class="clear-art">
       <span class="bunny">🐇</span>
     </div>
-    <p class="clear-title">クリア！</p>
+    <p class="clear-title" id="clear-title">クリア！</p>
     <p id="clear-stage"></p>
-    <button id="retry">もう一回</button>
-    <button id="next-stage">つぎのステージへ</button>
+    <button type="button" id="retry">もう一回</button>
+    <button type="button" id="next-stage">つぎのステージへ</button>
   </div>
 </div>
 

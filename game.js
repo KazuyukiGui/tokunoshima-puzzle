@@ -25,7 +25,25 @@ const el = {
   retry: document.getElementById("retry"),
   nextStage: document.getElementById("next-stage"),
   map: document.getElementById("map"),
+  srLive: document.getElementById("sr-live"),
 };
+
+// キーボード操作中だけフォーカスリングとヒントを出すためのフラグ
+let kbd = false;
+
+function setKeyboardMode(on) {
+  if (kbd === on) return;
+  kbd = on;
+  document.body.classList.toggle("using-keyboard", on);
+  if (!on) hideFocusRing();
+}
+
+// 同じ文言でも読み上げが走るよう、一度空にしてから入れ直す
+function announce(msg) {
+  if (!el.srLive) return;
+  el.srLive.textContent = "";
+  requestAnimationFrame(() => { el.srLive.textContent = msg; });
+}
 
 function shuffle(arr) {
   const a = arr.slice();
@@ -40,37 +58,53 @@ function renderTabs() {
   el.tabs.replaceChildren();
   for (const key of STAGE_ORDER) {
     const b = document.createElement("button");
+    b.type = "button";
     b.className = "tab" + (key === state.stage ? " active" : "");
     b.textContent = TOWNS[key];
+    b.dataset.stage = key;
+    b.setAttribute("aria-pressed", key === state.stage ? "true" : "false");
     b.addEventListener("click", () => selectStage(key));
     el.tabs.appendChild(b);
   }
 }
 
 function selectStage(key) {
+  // renderTabs はボタンを作り直すので、タブ上にいたフォーカスは同じタブへ戻す
+  const hadTabFocus = el.tabs.contains(document.activeElement);
   state.stage = key;
   state.villages = key === "all" ? VILLAGES : VILLAGES.filter((v) => v.town === key);
   state.placedCount = 0;
   setSelected(null);
   hideToast();
-  el.overlay.hidden = true;
+  hideOverlay();
   renderTabs();
   renderSlots();
   renderTray();
   updateProgress();
+  if (hadTabFocus) {
+    const tab = el.tabs.querySelector(`.tab[data-stage="${key}"]`);
+    if (tab) tab.focus();
+  }
 }
 
 function renderSlots() {
   el.slots.replaceChildren();
-  for (const v of state.villages) {
+  state.villages.forEach((v, i) => {
     const c = document.createElementNS(svgNS, "circle");
     c.setAttribute("cx", v.x);
     c.setAttribute("cy", v.y);
     c.setAttribute("r", 2.2);
     c.classList.add("slot");
     c.dataset.id = v.id;
+    c.setAttribute("role", "button");
+    // 読み上げで答えが漏れないよう、未配置の○は番号だけを名前にする
+    c.setAttribute("aria-label", `配置場所 ${i + 1}`);
+    // ロービングtabindex: Tabで入る先はつねに1つだけ、あとは矢印キーで動く
+    c.setAttribute("tabindex", i === 0 ? "0" : "-1");
     el.slots.appendChild(c);
-  }
+  });
+  el.slots.appendChild(focusRing);
+  hideFocusRing();
 }
 
 function renderTray() {
@@ -79,6 +113,11 @@ function renderTray() {
     const card = document.createElement("div");
     card.className = "card";
     card.dataset.id = v.id;
+    card.dataset.name = v.name;
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "-1");
+    card.setAttribute("aria-pressed", "false");
+    card.setAttribute("aria-label", `${v.name} ${v.kana}`);
     const name = document.createElement("div");
     name.className = "name";
     name.textContent = v.name;
@@ -88,6 +127,7 @@ function renderTray() {
     card.append(name, kana);
     el.tray.appendChild(card);
   }
+  refreshTrayRoving();
   updateTrayOverflow(true);
 }
 
@@ -144,9 +184,15 @@ let drag = null; // { card, id, startX, startY, lastX, mode: null|"scroll"|"drag
 let selected = null; // タップ選択中のカード
 
 function setSelected(card) {
-  if (selected) selected.classList.remove("selected");
+  if (selected) {
+    selected.classList.remove("selected");
+    selected.setAttribute("aria-pressed", "false");
+  }
   selected = card;
-  if (selected) selected.classList.add("selected");
+  if (selected) {
+    selected.classList.add("selected");
+    selected.setAttribute("aria-pressed", "true");
+  }
 }
 
 function rejectCard(card) {
@@ -205,6 +251,9 @@ document.addEventListener("pointerup", (e) => {
   if (mode === null) {
     // 動いていない=タップ → 選択のトグル
     setSelected(selected === card ? null : card);
+    // pointerdownでpreventDefaultしている分、フォーカスは自前で移す
+    refreshTrayRoving(card);
+    card.focus({ preventScroll: true });
     return;
   }
   if (mode === "scroll") return;
@@ -328,10 +377,11 @@ function hideToast() {
   el.toast.hidden = true;
 }
 
-function placeCard(card, slot) {
+function placeCard(card, slot, viaKeyboard) {
   slot.classList.remove("near");
   slot.classList.add("solved");
   const v = state.villages.find((x) => x.id === slot.dataset.id);
+  slot.setAttribute("aria-label", `${v.name}（配置済み）`);
   const label = document.createElementNS(svgNS, "text");
   label.setAttribute("x", v.x);
   label.setAttribute("y", v.y - 3.2);
@@ -341,13 +391,25 @@ function placeCard(card, slot) {
   el.slots.appendChild(label);
   playStamp(v);
   showToast(v);
+  const cardIndex = trayCards().indexOf(card);
   card.remove();
   updateTrayOverflow(false);
   state.placedCount++;
   updateProgress();
+  // 解けた○にキーボードの起点が残らないよう、次の未配置へ移す
+  if (slot.getAttribute("tabindex") === "0") {
+    const next = el.slots.querySelector(".slot:not(.solved)");
+    if (next) setRovingSlot(next);
+  }
+  if (viaKeyboard) {
+    announce(`正解、${v.name}。のこり ${state.villages.length - state.placedCount} 集落`);
+    // 次のカードへ戻して「選ぶ→置く」を続けられるようにする
+    const rest = trayCards();
+    if (rest.length) focusTrayCard(rest[Math.min(Math.max(cardIndex, 0), rest.length - 1)]);
+  }
   if (state.placedCount === state.villages.length) {
     el.clearStage.textContent = `${TOWNS[state.stage]} ぜんぶ${state.villages.length}集落、正解！`;
-    setTimeout(() => { el.overlay.hidden = false; }, 700);
+    setTimeout(showOverlay, 700);
   }
 }
 
@@ -357,6 +419,255 @@ el.nextStage.addEventListener("click", () => {
   const i = STAGE_ORDER.indexOf(state.stage);
   selectStage(STAGE_ORDER[(i + 1) % STAGE_ORDER.length]);
 });
+
+// ---- キーボード操作 ----
+// 流れ: Tabでカードへ → 矢印で選ぶ → Enterで「選択」して地図へ移動
+//       → 矢印で○を移動 → Enterで配置 → 自動でトレイに戻る（Escで取り消し）
+
+// SVGの:focus-visibleは環境差が大きいので、フォーカス位置は専用のリングで示す
+const focusRing = document.createElementNS(svgNS, "circle");
+focusRing.setAttribute("id", "slot-focus-ring");
+focusRing.setAttribute("r", 4.6);
+focusRing.setAttribute("aria-hidden", "true");
+focusRing.style.display = "none";
+
+function showFocusRing(slot) {
+  focusRing.setAttribute("cx", slot.getAttribute("cx"));
+  focusRing.setAttribute("cy", slot.getAttribute("cy"));
+  focusRing.style.display = "";
+  el.slots.appendChild(focusRing); // ラベルやスタンプの上に出す
+}
+
+function hideFocusRing() {
+  focusRing.style.display = "none";
+}
+
+function trayCards() {
+  return Array.from(el.tray.querySelectorAll(".card"));
+}
+
+// トレイ内でTab可能なカードを1枚だけにする(ロービングtabindex)
+function refreshTrayRoving(preferred) {
+  const cards = trayCards();
+  if (!cards.length) return null;
+  const target =
+    (preferred && cards.includes(preferred) && preferred) ||
+    cards.find((c) => c.getAttribute("tabindex") === "0") ||
+    cards[0];
+  for (const c of cards) c.setAttribute("tabindex", c === target ? "0" : "-1");
+  return target;
+}
+
+function focusTrayCard(card) {
+  const target = refreshTrayRoving(card);
+  if (target) target.focus();
+}
+
+function setRovingSlot(slot) {
+  for (const s of el.slots.querySelectorAll(".slot")) {
+    s.setAttribute("tabindex", s === slot ? "0" : "-1");
+  }
+}
+
+function slotCenter(slot) {
+  return { x: parseFloat(slot.getAttribute("cx")), y: parseFloat(slot.getAttribute("cy")) };
+}
+
+// 押した矢印の方向にある○のうち、まっすぐ近いものを選ぶ。
+// 押した向きを軸とした90度の円錐(横ズレ<=前進量)に絞り、その中で
+// 前進量 + 横ズレ×2 が最小のものを取る。
+// 円錐を絞らないと、右を押したのに大きく横へ飛んで目的地から遠ざかることがある
+// (57集落で「押すたびに近づく」が破綻する割合: 円錐なし17.6% → 90度1.3%)。
+// 60度まで狭めると今度は行き先の無い○が出て島の端で詰まるため、90度が上限かつ下限。
+function nextSlotInDirection(current, dx, dy, skipSolved) {
+  const from = slotCenter(current);
+  let best = null;
+  let bestScore = Infinity;
+  for (const slot of el.slots.querySelectorAll(".slot")) {
+    if (slot === current) continue;
+    if (skipSolved && slot.classList.contains("solved")) continue;
+    const p = slotCenter(slot);
+    const vx = p.x - from.x;
+    const vy = p.y - from.y;
+    const along = vx * dx + vy * dy;
+    if (along <= 0) continue; // 逆方向・真横は対象外
+    const across = Math.abs(vx * -dy + vy * dx);
+    if (across > along) continue; // 90度の円錐から外れる
+    const score = along + across * 2;
+    if (score < bestScore) {
+      best = slot;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+function focusSlotForPlacement() {
+  const open = el.slots.querySelectorAll(".slot:not(.solved)");
+  if (!open.length) return;
+  const current = el.slots.querySelector('.slot[tabindex="0"]');
+  const target = current && !current.classList.contains("solved") ? current : open[0];
+  setRovingSlot(target);
+  target.focus();
+}
+
+function cancelSelection() {
+  if (!selected) return;
+  const card = selected;
+  setSelected(null);
+  announce("選択を解除しました");
+  if (el.tray.contains(card)) focusTrayCard(card);
+}
+
+function activateSlot(slot) {
+  if (!selected) {
+    if (slot.classList.contains("solved")) {
+      const v = state.villages.find((x) => x.id === slot.dataset.id);
+      // showToast の中身は role="status" なので読み上げは自動で走る
+      if (v) showToast(v);
+    } else {
+      announce("先に集落カードを選んでください");
+    }
+    return;
+  }
+  const card = selected;
+  if (slot.dataset.id === card.dataset.id) {
+    setSelected(null);
+    placeCard(card, slot, true);
+  } else {
+    rejectCard(card);
+    announce(`ここは ${card.dataset.name} ではありません`);
+  }
+}
+
+const ARROWS = Object.assign(Object.create(null), {
+  ArrowRight: [1, 0],
+  ArrowLeft: [-1, 0],
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+});
+
+const TRAY_STEP = Object.assign(Object.create(null), {
+  ArrowRight: 2,
+  ArrowLeft: -2,
+  ArrowDown: 1,
+  ArrowUp: -1,
+});
+
+function isEnterOrSpace(e) {
+  return e.key === "Enter" || e.key === " " || e.key === "Spacebar";
+}
+
+// トレイ: 2段の列送りグリッドなので 左右=±2、上下=±1 で隣に移る
+el.tray.addEventListener("keydown", (e) => {
+  const card = e.target.closest && e.target.closest(".card");
+  if (!card) return;
+  const cards = trayCards();
+  const i = cards.indexOf(card);
+  const step = TRAY_STEP[e.key];
+  if (step !== undefined) {
+    e.preventDefault();
+    focusTrayCard(cards[Math.min(cards.length - 1, Math.max(0, i + step))]);
+    return;
+  }
+  if (e.key === "Home" || e.key === "End") {
+    e.preventDefault();
+    focusTrayCard(e.key === "Home" ? cards[0] : cards[cards.length - 1]);
+    return;
+  }
+  if (isEnterOrSpace(e)) {
+    e.preventDefault();
+    if (selected === card) {
+      cancelSelection();
+      return;
+    }
+    setSelected(card);
+    refreshTrayRoving(card);
+    announce(`${card.dataset.name} を選びました。矢印キーで地図の○を選び、Enterで置きます`);
+    focusSlotForPlacement();
+    return;
+  }
+  if (e.key === "Escape") {
+    e.preventDefault();
+    cancelSelection();
+  }
+});
+
+el.slots.addEventListener("keydown", (e) => {
+  const slot = e.target;
+  if (!slot.classList || !slot.classList.contains("slot")) return;
+  const dir = ARROWS[e.key];
+  if (dir) {
+    e.preventDefault();
+    const next = nextSlotInDirection(slot, dir[0], dir[1], !!selected);
+    if (next) {
+      setRovingSlot(next);
+      next.focus();
+    }
+    return;
+  }
+  if (isEnterOrSpace(e)) {
+    e.preventDefault();
+    activateSlot(slot);
+    return;
+  }
+  if (e.key === "Escape") {
+    e.preventDefault();
+    cancelSelection();
+  }
+});
+
+el.slots.addEventListener("focusin", (e) => {
+  const slot = e.target;
+  if (!slot.classList || !slot.classList.contains("slot")) return;
+  setRovingSlot(slot);
+  if (kbd) showFocusRing(slot);
+});
+
+el.slots.addEventListener("focusout", hideFocusRing);
+
+// ステージタブは左右キーでも移動できるようにする
+el.tabs.addEventListener("keydown", (e) => {
+  const dir = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+  if (!dir) return;
+  const tabs = Array.from(el.tabs.querySelectorAll(".tab"));
+  const i = tabs.indexOf(document.activeElement);
+  if (i < 0) return;
+  e.preventDefault();
+  tabs[(i + dir + tabs.length) % tabs.length].focus();
+});
+
+// クリア画面はダイアログとして扱う(フォーカスを閉じ込め、Escで閉じる)
+function showOverlay() {
+  el.overlay.hidden = false;
+  el.retry.focus();
+}
+
+function hideOverlay() {
+  el.overlay.hidden = true;
+}
+
+el.overlay.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    e.preventDefault();
+    hideOverlay();
+    return;
+  }
+  if (e.key !== "Tab") return;
+  const f = [el.retry, el.nextStage];
+  const i = f.indexOf(document.activeElement);
+  e.preventDefault();
+  f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+});
+
+// キーボードを使い始めたらフォーカスリングと操作ヒントを出す
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Tab" || e.key === "Escape" || e.key in ARROWS || isEnterOrSpace(e)) {
+    setKeyboardMode(true);
+  }
+}, true);
+
+document.addEventListener("pointerdown", () => setKeyboardMode(false), true);
 
 // ---- devモード: ?dev=1 で地図クリック座標をviewBox座標で出力 ----
 if (new URLSearchParams(location.search).get("dev") === "1") {
