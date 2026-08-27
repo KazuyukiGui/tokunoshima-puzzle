@@ -20,6 +20,7 @@ const el = {
   progressFill: document.getElementById("progress-fill"),
   townChips: document.getElementById("town-chips"),
   toast: document.getElementById("toast"),
+  kbLive: document.getElementById("kb-live"),
   overlay: document.getElementById("clear-overlay"),
   clearStage: document.getElementById("clear-stage"),
   retry: document.getElementById("retry"),
@@ -61,6 +62,7 @@ function selectStage(key) {
 }
 
 function renderSlots() {
+  setCursor(null);
   el.slots.replaceChildren();
   for (const v of state.villages) {
     const c = document.createElementNS(svgNS, "circle");
@@ -79,6 +81,10 @@ function renderTray() {
     const card = document.createElement("div");
     card.className = "card";
     card.dataset.id = v.id;
+    // キーボード操作用: Tabで送れるようにする(ポインタ操作の挙動は変えない)
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", `${v.name}（${v.kana}）のカード`);
     const name = document.createElement("div");
     name.className = "name";
     name.textContent = v.name;
@@ -142,6 +148,7 @@ function isSolved(id) {
 
 let drag = null; // { card, id, startX, startY, lastX, mode: null|"scroll"|"drag" }
 let selected = null; // タップ選択中のカード
+let pointerInteracting = false; // ポインタ操作中のフォーカスを「キーボード操作」と誤認しないための目印
 
 function setSelected(card) {
   if (selected) selected.classList.remove("selected");
@@ -158,6 +165,7 @@ el.tray.addEventListener("pointerdown", (e) => {
   const card = e.target.closest(".card");
   if (!card) return;
   e.preventDefault();
+  pointerInteracting = true;
   drag = { card, id: card.dataset.id, startX: e.clientX, startY: e.clientY, lastX: e.clientX, mode: null };
   // 以降のpointermove/upを確実に受け取る(指がカード外に出ても途切れない)
   try { card.setPointerCapture(e.pointerId); } catch (_) { /* 古いブラウザは無視 */ }
@@ -341,7 +349,13 @@ function placeCard(card, slot) {
   el.slots.appendChild(label);
   playStamp(v);
   showToast(v);
+  // キーボード操作でカードが消えるとフォーカスが飛ぶので、隣のカードへ引き継ぐ
+  const refocus = document.activeElement === card ? (card.nextElementSibling || card.previousElementSibling) : null;
+  if (selected === card) setSelected(null);
   card.remove();
+  if (refocus) refocus.focus();
+  // ○カーソルを使っていた場合だけ、次の未配置の○へ送る
+  if (cursorSlot === slot) setCursor(firstUnsolvedSlot());
   updateTrayOverflow(false);
   state.placedCount++;
   updateProgress();
@@ -356,6 +370,172 @@ el.retry.addEventListener("click", () => selectStage(state.stage));
 el.nextStage.addEventListener("click", () => {
   const i = STAGE_ORDER.indexOf(state.stage);
   selectStage(STAGE_ORDER[(i + 1) % STAGE_ORDER.length]);
+});
+
+// ---- キーボード操作: Tabでカード送り / 矢印キーで○を移動 / Enterで配置 ----
+// ポインタ操作(ドラッグ&ドロップ・タップ)とは独立した経路。selected(選択中カード)は共用する。
+
+let cursorSlot = null; // 地図上の○カーソル
+
+// タップ/ドラッグ由来のフォーカスを拾わないよう、ポインタ操作の終了を見張る
+document.addEventListener("pointerup", () => { pointerInteracting = false; });
+document.addEventListener("pointercancel", () => { pointerInteracting = false; });
+
+function announce(msg) {
+  if (el.kbLive) el.kbLive.textContent = msg;
+}
+
+function allSlots() {
+  return Array.from(el.slots.querySelectorAll(".slot"));
+}
+
+function firstUnsolvedSlot() {
+  return el.slots.querySelector(".slot:not(.solved)");
+}
+
+function slotCenter(slot) {
+  return { x: Number(slot.getAttribute("cx")), y: Number(slot.getAttribute("cy")) };
+}
+
+function setCursor(slot) {
+  if (cursorSlot) cursorSlot.classList.remove("cursor");
+  cursorSlot = slot || null;
+  if (!cursorSlot) return;
+  cursorSlot.classList.add("cursor");
+  announceCursor();
+}
+
+function ensureCursor() {
+  if (!cursorSlot || !cursorSlot.isConnected) setCursor(firstUnsolvedSlot());
+  return cursorSlot;
+}
+
+// 正解を漏らさないよう、未配置の○は名前ではなく位置(何番目か)だけ読み上げる
+function announceCursor() {
+  const slots = allSlots();
+  const i = slots.indexOf(cursorSlot) + 1;
+  if (cursorSlot.classList.contains("solved")) {
+    const v = state.villages.find((x) => x.id === cursorSlot.dataset.id);
+    announce(`${i} / ${slots.length} 番目の○ ${v ? v.name : "配置ずみ"}`);
+  } else {
+    announce(`${i} / ${slots.length} 番目の○ 空いています`);
+  }
+}
+
+const KEY_DIRS = {
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  Up: [0, -1],
+  Down: [0, 1],
+  Left: [-1, 0],
+  Right: [1, 0],
+};
+
+// 押した向きの円錐内でいちばん近い○へ。円錐内に無ければ、その向きにある中で最も近い○へ
+function moveCursor(dx, dy) {
+  const from = ensureCursor();
+  if (!from) return;
+  const o = slotCenter(from);
+  let best = null;
+  let bestScore = Infinity;
+  let fallback = null;
+  let fallbackScore = Infinity;
+  for (const s of allSlots()) {
+    if (s === from) continue;
+    const p = slotCenter(s);
+    const vx = p.x - o.x;
+    const vy = p.y - o.y;
+    const along = vx * dx + vy * dy; // 押した向きの成分
+    if (along <= 0.01) continue;
+    const perp = Math.abs(vx * dy - vy * dx); // 向きからの横ずれ
+    const score = along + perp * 2.2;
+    if (perp <= along * 1.4 && score < bestScore) {
+      best = s;
+      bestScore = score;
+    }
+    if (score < fallbackScore) {
+      fallback = s;
+      fallbackScore = score;
+    }
+  }
+  const next = best || fallback;
+  if (!next) return;
+  setCursor(next);
+  keepMapInView();
+}
+
+function keepMapInView() {
+  const r = el.map.getBoundingClientRect();
+  if (r.top < 0 || r.bottom > window.innerHeight) {
+    el.map.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+}
+
+function focusedCard() {
+  const a = document.activeElement;
+  return a && a.classList && a.classList.contains("card") ? a : null;
+}
+
+// Enter/Space: カーソル上の○に、選択中のカードを置く(配置ずみなら豆知識を再表示)
+function activateCursor() {
+  const slot = ensureCursor();
+  if (!slot) return;
+  if (slot.classList.contains("solved")) {
+    const v = state.villages.find((x) => x.id === slot.dataset.id);
+    if (v) showToast(v);
+    return;
+  }
+  const card = focusedCard() || selected;
+  if (!card || !card.isConnected) {
+    announce("Tabでカードを選んでください");
+    return;
+  }
+  if (slot.dataset.id === card.dataset.id) {
+    placeCard(card, slot);
+  } else {
+    rejectCard(card);
+    announce("そこではありません");
+  }
+}
+
+// カードにフォーカスが入ったら選択状態にし、○カーソルを出す(キーボード操作の入口)
+el.tray.addEventListener("focusin", (e) => {
+  if (pointerInteracting) return;
+  const card = e.target.closest(".card");
+  if (!card) return;
+  setSelected(card);
+  ensureCursor();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const card = focusedCard();
+  // フォーカスがカードにある時か、タップでカードを選んでいる時だけ横取りする
+  if (!card) {
+    if (!selected) return;
+    const a = document.activeElement;
+    if (a && a.closest && a.closest("input, textarea, select, button, a, summary, [contenteditable]")) return;
+  }
+
+  const dir = KEY_DIRS[e.key];
+  if (dir) {
+    e.preventDefault();
+    moveCursor(dir[0], dir[1]);
+    return;
+  }
+  if (e.key === "Enter" || (card && (e.key === " " || e.key === "Spacebar"))) {
+    e.preventDefault();
+    activateCursor();
+    return;
+  }
+  if (e.key === "Escape" || e.key === "Esc") {
+    setSelected(null);
+    setCursor(null);
+    announce("選択を解除しました");
+    if (card) card.blur();
+  }
 });
 
 // ---- devモード: ?dev=1 で地図クリック座標をviewBox座標で出力 ----

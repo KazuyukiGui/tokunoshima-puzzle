@@ -62,6 +62,33 @@ h1 .accent { color: var(--accent); }
   color: #9a8a76;
 }
 
+.tagline-kb { margin-top: 2px; font-size: 10.5px; }
+
+.tagline-kb kbd {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--muted);
+}
+
+/* 読み上げ専用(画面には出さない) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 #stage-tabs { display: flex; gap: 6px; margin-top: 12px; }
 
 .tab {
@@ -204,6 +231,19 @@ main { flex: 1; display: flex; flex-direction: column; padding: 12px 14px 0; gap
   cursor: pointer; /* タップで豆知識を再表示 */
 }
 
+/* キーボードの○カーソル。.nearより後に置いて確実に見えるようにする */
+.slot.cursor {
+  stroke: #0b5f70;
+  stroke-width: 1.2;
+  stroke-dasharray: none;
+  fill: #fff0c4;
+}
+
+.slot.solved.cursor {
+  fill: var(--accent);
+  stroke: #0b5f70;
+}
+
 .slot-label {
   font-size: 2.7px;
   font-weight: 800;
@@ -343,6 +383,14 @@ main { flex: 1; display: flex; flex-direction: column; padding: 12px 14px 0; gap
 
 .card .name { font-size: 15px; font-weight: 800; line-height: 1.15; color: var(--ink); }
 .card .kana { font-size: 9.5px; font-weight: 500; color: var(--muted-2); margin-top: 1px; }
+
+/* キーボードで送っている時だけリングを出す(クリック時は出さない) */
+.card:focus { outline: none; }
+
+.card:focus-visible {
+  outline: 3px solid #0b5f70;
+  outline-offset: 2px;
+}
 
 .card.selected {
   border-color: var(--accent);
