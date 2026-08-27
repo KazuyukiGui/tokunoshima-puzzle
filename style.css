@@ -12,6 +12,7 @@
   --sea-1: #9be6ec;
   --sea-2: #54c6d6;
   --sea-3: #26a3bb;
+  --focus: #0b5f70;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -578,4 +579,65 @@ main { flex: 1; display: flex; flex-direction: column; padding: 12px 14px 0; gap
   border-top: 1px solid var(--line);
   font-size: 11.5px;
   color: var(--muted-2);
+}
+
+/* ---- キーボード操作 ----
+   フォーカス位置がはっきり見えることが最優先。
+   操作ヒントはキーボードを使い始めたときだけ出して、タッチ操作の邪魔をしない。
+---------------------------------------------------------------- */
+
+/* 読み上げ専用(画面には出さないが、支援技術からは読める) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.kbd-hint { display: none; }
+body.using-keyboard .kbd-hint { display: block; }
+body.using-keyboard .tray-hint.kbd-hint { display: inline; }
+/* 行数を変えないよう、キーボード時はタッチ向けの案内と差し替える */
+body.using-keyboard .tagline:not(.kbd-hint),
+body.using-keyboard .tray-hint:not(.kbd-hint) { display: none; }
+
+.kbd-hint b { font-weight: 800; color: var(--accent-deep); }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.tab:focus-visible { outline-offset: 1px; }
+
+.card:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-color: var(--focus);
+}
+
+#about summary:focus-visible { outline-offset: 0; border-radius: 8px; }
+
+/* ○のフォーカスは専用リングで示す(SVGのoutlineは環境差が大きいため) */
+.slot:focus { outline: none; }
+
+/* リングが出ない環境向けのフォールバック */
+.slot:focus-visible { stroke-width: 1.2; stroke-dasharray: none; }
+
+#slot-focus-ring {
+  fill: none;
+  stroke: var(--focus);
+  stroke-width: 0.9;
+  stroke-dasharray: 1.8 1.3;
+  pointer-events: none;
+  animation: ring-turn 5s linear infinite;
+}
+
+@keyframes ring-turn { to { stroke-dashoffset: -12.4; } }
+
+@media (prefers-reduced-motion: reduce) {
+  #slot-focus-ring { animation: none; }
 }
