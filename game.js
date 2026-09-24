@@ -76,6 +76,7 @@ function selectStage(key) {
   state.placedCount = 0;
   setSelected(null);
   hideToast();
+  clearTimeout(overlayTimer);
   hideOverlay();
   renderTabs();
   renderSlots();
@@ -354,6 +355,8 @@ function playStamp(v) {
 }
 
 let toastTimer = null;
+// クリア画面の表示予約。直後にステージを切り替えたら取り消す
+let overlayTimer = null;
 
 function showToast(v) {
   el.toast.querySelector(".toast-name").textContent = v.name;
@@ -409,15 +412,19 @@ function placeCard(card, slot, viaKeyboard) {
   }
   if (state.placedCount === state.villages.length) {
     el.clearStage.textContent = `${TOWNS[state.stage]} ぜんぶ${state.villages.length}集落、正解！`;
-    setTimeout(showOverlay, 700);
+    overlayTimer = setTimeout(showOverlay, 700);
   }
 }
 
-el.retry.addEventListener("click", () => selectStage(state.stage));
+el.retry.addEventListener("click", () => {
+  selectStage(state.stage);
+  focusAfterOverlay();
+});
 
 el.nextStage.addEventListener("click", () => {
   const i = STAGE_ORDER.indexOf(state.stage);
   selectStage(STAGE_ORDER[(i + 1) % STAGE_ORDER.length]);
+  focusAfterOverlay();
 });
 
 // ---- キーボード操作 ----
@@ -647,10 +654,23 @@ function hideOverlay() {
   el.overlay.hidden = true;
 }
 
+// 閉じたクリア画面の中にフォーカスを残さない。
+// カードが残っていればトレイへ、全部置き済みなら現在のステージタブへ戻す
+function focusAfterOverlay() {
+  const cards = trayCards();
+  if (cards.length) {
+    focusTrayCard(cards[0]);
+    return;
+  }
+  const tab = el.tabs.querySelector(`.tab[data-stage="${state.stage}"]`);
+  if (tab) tab.focus();
+}
+
 el.overlay.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     e.preventDefault();
     hideOverlay();
+    focusAfterOverlay();
     return;
   }
   if (e.key !== "Tab") return;
@@ -661,7 +681,13 @@ el.overlay.addEventListener("keydown", (e) => {
 });
 
 // キーボードを使い始めたらフォーカスリングと操作ヒントを出す
+// (情報提供フォームへの文字入力はゲーム操作ではないので対象外)
+function isTextField(t) {
+  return !!t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT" || t.isContentEditable);
+}
+
 document.addEventListener("keydown", (e) => {
+  if (isTextField(e.target) && e.key !== "Tab") return;
   if (e.key === "Tab" || e.key === "Escape" || e.key in ARROWS || isEnterOrSpace(e)) {
     setKeyboardMode(true);
   }
